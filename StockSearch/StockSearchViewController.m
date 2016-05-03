@@ -110,25 +110,7 @@
 
 #pragma mark - worker
 
-// Update refresh state and schedule the timer if necessary
-// Earilest refresh will happen after 10s
-- (void)updateAutoRefreshState {
-    
-    if (self.autoRefreshSwitch.on) {
-        if (self.autoRefreshTimer == nil) {
-            self.autoRefreshTimer = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(fetchAndUpdateStockDetailsWithTimer:) userInfo:nil repeats:YES];
-        }
-    } else {
-        if (self.autoRefreshTimer != nil) {
-            [self.autoRefreshTimer invalidate];
-            self.autoRefreshTimer = nil;
-        }
-    }
-    
-}
-
 - (void)initializeSearchTextField {
-    
     StockNameCompletion *searchViewStockNameCompletion = [[StockNameCompletion alloc]init];
     self.searchTextField.autoCompleteDataSource = searchViewStockNameCompletion;
     self.searchTextField.autoCompleteDelegate = searchViewStockNameCompletion;
@@ -141,11 +123,61 @@
     self.searchTextField.maximumNumberOfAutoCompleteRows = 4;
     self.searchTextField.autoCompleteTableBorderColor = [UIColor whiteColor];
     self.searchTextField.autoCompleteTableBorderWidth = 1.0f;
-
 }
 
-- (void)fetchAndUpdateStockDetailsWithTimer:(NSTimer *)timer {
-    [self fetchAndUpdateStockDetails];
+// Update refresh state and schedule the timer if necessary
+// Earilest refresh will happen after 10s
+- (void)updateAutoRefreshState {
+    if (self.autoRefreshSwitch.on) {
+        if (self.autoRefreshTimer == nil) {
+            self.autoRefreshTimer = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(fetchAndUpdateStockDetailsWithTimer:) userInfo:nil repeats:YES];
+        }
+    } else {
+        if (self.autoRefreshTimer != nil) {
+            [self.autoRefreshTimer invalidate];
+            self.autoRefreshTimer = nil;
+        }
+    }
+}
+
+- (NSMutableDictionary *)dictionaryWithJSONData:(NSData *)JSONData {
+    
+    NSDictionary *stockDetailDict = [NSJSONSerialization JSONObjectWithData:JSONData options:(NSJSONReadingOptions)0 error:nil];
+    NSMutableDictionary *stockDetailMutableDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", @"Price", @"", @"Change", @"", @"CompanyName", @"", @"MarketCap", nil];
+    NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+    
+    // Set price
+    numberFormatter.positiveFormat = @"$ ###0.00";
+    stockDetailMutableDict[@"Price"] = [numberFormatter stringFromNumber:stockDetailDict[@"LastPrice"]];
+    
+    // Set price change
+    numberFormatter.negativeFormat = @"-##0.00";
+    numberFormatter.positiveFormat = @"+##0.00";
+    NSString *priceChangeString = [numberFormatter stringFromNumber:stockDetailDict[@"Change"]];
+    
+    // Set price change percent
+    numberFormatter.negativeFormat = @"(-##0.00'%')";
+    numberFormatter.positiveFormat = @"(##0.00'%')";
+    stockDetailMutableDict[@"Change"] = [priceChangeString stringByAppendingString:[numberFormatter stringFromNumber:stockDetailDict[@"ChangePercent"]]];
+    
+    // Set company name
+    stockDetailMutableDict[@"CompanyName"] = stockDetailDict[@"Name"];
+    
+    // Set market cap
+    NSInteger marketCapValue = [stockDetailDict[@"MarketCap"] integerValue];
+    NSString *marketCapSuffix = @"";
+    if (marketCapValue >= 1000000000) {
+        marketCapValue /= 1000000000;
+        marketCapSuffix = @" Billion";
+    } else if (marketCapValue >= 1000000) {
+        marketCapValue /= 1000000;
+        marketCapSuffix = @" Million";
+    }
+    numberFormatter.positiveFormat = @"Market Cap: #####0.00";
+    NSString *marketCapString = [numberFormatter stringFromNumber:[NSNumber numberWithInteger:marketCapValue]];
+    stockDetailMutableDict[@"MarketCap"] = [marketCapString stringByAppendingString:marketCapSuffix];
+    
+    return stockDetailMutableDict;
 }
 
 - (void)fetchAndUpdateStockDetails {
@@ -166,58 +198,22 @@
             NSURL *URL = [NSURL URLWithString:URLString];
             
             NSURLSessionDataTask *stockSearchTask = [[NSURLSession sharedSession] dataTaskWithURL:URL completionHandler:^(NSData *data, NSURLResponse *response, NSError* error){
-                if (error == nil) {
-                    NSDictionary *stockDetailDict = [NSJSONSerialization JSONObjectWithData:data options:(NSJSONReadingOptions)0 error:nil];
-                    NSMutableDictionary *stockDetailMutableDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", @"Price", @"", @"Change", @"", @"CompanyName", @"", @"MarketCap", nil];
-                    NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
-                    
-                    // Set price
-                    numberFormatter.positiveFormat = @"$ ###0.00";
-                    stockDetailMutableDict[@"Price"] = [numberFormatter stringFromNumber:stockDetailDict[@"LastPrice"]];
-                    
-                    // Set price change
-                    numberFormatter.negativeFormat = @"-##0.00";
-                    numberFormatter.positiveFormat = @"+##0.00";
-                    NSString *priceChangeString = [numberFormatter stringFromNumber:stockDetailDict[@"Change"]];
-                    
-                    // Set price change percent
-                    numberFormatter.negativeFormat = @"(-##0.00'%')";
-                    numberFormatter.positiveFormat = @"(##0.00'%')";
-                    stockDetailMutableDict[@"Change"] = [priceChangeString stringByAppendingString:[numberFormatter stringFromNumber:stockDetailDict[@"ChangePercent"]]];
-                    
-                    // Set company name
-                    stockDetailMutableDict[@"CompanyName"] = stockDetailDict[@"Name"];
-                    
-                    // Set market cap
-                    NSInteger marketCapValue = [stockDetailDict[@"MarketCap"] integerValue];
-                    NSString *marketCapSuffix = @"";
-                    if (marketCapValue >= 1000000000) {
-                        marketCapValue /= 1000000000;
-                        marketCapSuffix = @" Billion";
-                    } else if (marketCapValue >= 1000000) {
-                        marketCapValue /= 1000000;
-                        marketCapSuffix = @" Million";
-                    }
-                    numberFormatter.positiveFormat = @"Market Cap: #####0.00";
-                    NSString *marketCapString = [numberFormatter stringFromNumber:[NSNumber numberWithInteger:marketCapValue]];
-                    stockDetailMutableDict[@"MarketCap"] = [marketCapString stringByAppendingString:marketCapSuffix];
-                    
-                    // If row has not been deleted, update the stock details mutable dictionary and reload table data
-                    if ([self.stockSymbolsMutableArray indexOfObject:symbolString] != NSNotFound) {
-                        self.stockDetailsMutableDict[symbolString] = stockDetailMutableDict;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [self.favoriteStocksTableView reloadData];
-                        });
-                    }
+                // If row has not been deleted, update the stock details mutable dictionary and reload table data
+                if (error == nil && [self.stockSymbolsMutableArray indexOfObject:symbolString] != NSNotFound) {
+                    self.stockDetailsMutableDict[symbolString] = [self dictionaryWithJSONData:data];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.favoriteStocksTableView reloadData];
+                    });
                     
                 } else {
                     //Network error when retriving stock information.
-                    NSLog(@"Network Error Occurred When Retriving Stock Information.");
+                    NSLog(@"Network Error When Retriving Stock Information.");
                 }
                 dispatch_async(networkTrafficCountingQueue, ^{
                     *onGoingNetworkTrafficCount = *onGoingNetworkTrafficCount - 1;
-                    NSAssert(*onGoingNetworkTrafficCount >= 0, @"Error in network traffic counting! Count: %ld", *onGoingNetworkTrafficCount);
+                    NSAssert(*onGoingNetworkTrafficCount >= 0, @"Internal Error When Counting Network Traffic! Count: %ld", *onGoingNetworkTrafficCount);
                     if (*onGoingNetworkTrafficCount == 0) {
+                        free(onGoingNetworkTrafficCount);
                         dispatch_async(dispatch_get_main_queue(), ^{
                             if (self.activityIndicator.isAnimating) {
                                 [self.activityIndicator stopAnimating];
@@ -229,16 +225,25 @@
             
             [stockSearchTask resume];
         }
-        
     }
-    
-    
+}
+
+- (void)fetchAndUpdateStockDetailsWithTimer:(NSTimer *)timer {
+    [self fetchAndUpdateStockDetails];
+}
+
+- (void)showAlertWithTitle:(NSString *) title {
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:@"" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {}];
+    [alert addAction:defaultAction];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)validateSearchTextAndGoToDetailView {
     
+    // Show alert when no input symbol
     if (self.searchTextField.text.length == 0) {
-        NSLog(@"Please Enter a Stock Name or Symbol.");
+        [self showAlertWithTitle:@"Please Enter a Stock Name or Symbol."];
         return;
     }
     
@@ -256,8 +261,8 @@
     
     NSURLSessionDataTask *stockSearchTask = [[NSURLSession sharedSession] dataTaskWithURL:URL completionHandler:^(NSData *data, NSURLResponse *response, NSError* error){
         if (error == nil) {
+            // Compare returned symbols with the text in search text field
             NSArray *searchResultArray = [NSJSONSerialization JSONObjectWithData:data options:(NSJSONReadingOptions)0 error:nil];
-            
             for (NSDictionary *stockItem in searchResultArray) {
                 if ([symbolString isEqualToString:((NSString *)stockItem[@"Symbol"]).uppercaseString]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -267,11 +272,14 @@
                     return;
                 }
             }
-            //No symbol from API matches the one in the search text field.
-            NSLog(@"Invalid Symbol");
+            
+            // Show an alert when no returned symbols matches the one in search text field
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self showAlertWithTitle:@"Invalid Symbol"];
+            });
         } else {
-            //Network error when validating symbol.
-            NSLog(@"Network Error Occurred When Validating Symbol.");
+            // Network error when validating symbol
+            NSLog(@"Network Error When Validating Symbol.");
         }
     }];
     
@@ -319,10 +327,7 @@
     // Load cell prototype
     static NSString *CellIdentifier = @"FavoriteStockCell";
     FavoriteStockTableViewCell *cell = (FavoriteStockTableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        NSLog(@"Error loading cell.");
-        abort();
-    }
+    NSAssert(cell != nil, @"Internal Error When Dequeuing Cell.");
     
     // Use stock detail information in dictionary to update label text
     NSInteger stockIndex = indexPath.row;
@@ -450,6 +455,7 @@
     [self saveChangesToObjectsInMyMOC];
 }
 
+// Only for development; Clear all stored data
 - (void)clearDataModel {
     
     NSFetchRequest *request = [[NSFetchRequest alloc] init];
@@ -457,14 +463,12 @@
     NSArray *result = [self.managedObjectContext executeFetchRequest:request error:nil];
     if (result.count == 1) {
         [self.managedObjectContext deleteObject:result[0]];
-        NSLog(@"Deleted StockSymbols Data!");
     }
     
     request.entity = [NSEntityDescription entityForName:@"AutoRefresh" inManagedObjectContext:self.managedObjectContext];
     result = [self.managedObjectContext executeFetchRequest:request error:nil];
     if (result.count == 1) {
         [self.managedObjectContext deleteObject:result[0]];
-        NSLog(@"Deleted AutoRefresh Data!");
     }
     
     //save state
@@ -474,8 +478,7 @@
 - (void)saveChangesToObjectsInMyMOC {
     NSError *error = nil;
     if (self.managedObjectContext.hasChanges && ![self.managedObjectContext save:&error]) {
-        NSLog(@"Error when saving data! %@, %@", error, error.userInfo);
-        abort();
+        NSAssert(false, @"Data Model Error When Saving Data! %@, %@", error, error.userInfo);
     }
 }
 

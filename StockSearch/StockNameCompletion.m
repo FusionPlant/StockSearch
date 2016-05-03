@@ -46,7 +46,7 @@
             handler([autoCompleteArray copy]);
         } else {
             //network error
-            NSLog(@"Network Error Occurred When Auto-Completing!");
+            NSLog(@"Network Error When Auto-Completing!");
             handler([NSArray array]);
         }
     }];
