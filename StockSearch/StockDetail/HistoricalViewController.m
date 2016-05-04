@@ -10,18 +10,19 @@
 
 @interface HistoricalViewController ()
 
+@property (weak, nonatomic) IBOutlet UIWebView *stockChartWebView;
+
 @end
 
 @implementation HistoricalViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    
+    // Load web view
+    NSURL *stockChartURL = [NSURL URLWithString:[@"http://stockchart-1301.appspot.com/?symbol=" stringByAppendingString:self.stockSymbolString]];
+    [self.stockChartWebView loadRequest:[NSURLRequest requestWithURL:stockChartURL]];
+    self.stockChartWebView.scrollView.scrollEnabled = NO;
 }
 
 @end

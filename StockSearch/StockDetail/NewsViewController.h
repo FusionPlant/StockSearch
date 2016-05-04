@@ -10,4 +10,6 @@
 
 @interface NewsViewController : UIViewController
 
+@property (nonatomic) NSString *stockSymbolString;
+
 @end

@@ -27,15 +27,12 @@
     currentVC.stockDetailViewController = self.stockDetailViewController;
     
     // Initialize historical view
-    //HistoricalViewController *historicalVC = self.viewControllers[1];
+    HistoricalViewController *historicalVC = self.viewControllers[1];
+    historicalVC.stockSymbolString = self.stockDetailViewController.stockSymbolString;
     
     // Initialize news view
-    //NewsViewController *newsVC = self.viewControllers[2];
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    NewsViewController *newsVC = self.viewControllers[2];
+    newsVC.stockSymbolString = self.stockDetailViewController.stockSymbolString;
 }
 
 @end

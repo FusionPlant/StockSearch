@@ -84,10 +84,6 @@
     self.navigationController.navigationBar.translucent = YES;
 }
 
-//- (void)didReceiveMemoryWarning {
-//    [super didReceiveMemoryWarning];
-//}
-
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     
     if ([segue.identifier isEqualToString:@"ShowStockDetailSegue"]) {
@@ -179,6 +175,11 @@
     NSMutableDictionary *stockDetailMutableDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", @"Price", @"", @"Change", @"", @"CompanyName", @"", @"MarketCap", nil];
     NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
     
+    // Return empty dictionary if status is not success
+    if (![stockDetailDict[@"Status"] isEqualToString:@"SUCCESS"]) {
+        return stockDetailMutableDict;
+    }
+
     // Set price
     numberFormatter.positiveFormat = @"$ ###0.00";
     stockDetailMutableDict[@"Price"] = [numberFormatter stringFromNumber:stockDetailDict[@"LastPrice"]];

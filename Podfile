@@ -6,5 +6,7 @@
 target 'StockSearch' do
   pod 'MLPAutoCompleteTextField', '~> 1.5'
   pod 'AFNetworking', '~> 3.1.0'
+  pod 'FBSDKCoreKit'
+  pod 'FBSDKShareKit'
+  pod 'FBSDKLoginKit'
 end
-

@@ -10,4 +10,6 @@
 
 @interface HistoricalViewController : UIViewController
 
+@property (nonatomic) NSString *stockSymbolString;
+
 @end

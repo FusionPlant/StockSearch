@@ -61,17 +61,6 @@
     
 }
 
-- (BOOL)autoCompleteTextField:(MLPAutoCompleteTextField *)textField
-          shouldConfigureCell:(UITableViewCell *)cell
-       withAutoCompleteString:(NSString *)autocompleteString
-         withAttributedString:(NSAttributedString *)boldedString
-        forAutoCompleteObject:(id<MLPAutoCompletionObject>)autocompleteObject
-            forRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    return YES;
-}
-
-
 - (void)autoCompleteTextField:(MLPAutoCompleteTextField *)textField
 willShowAutoCompleteTableView:(UITableView *)autoCompleteTableView {
     
