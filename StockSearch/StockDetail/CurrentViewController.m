@@ -7,31 +7,67 @@
 //
 
 #import "CurrentViewController.h"
+#import "StockDetailTabBarViewController.h"
 
 @interface CurrentViewController ()
+
+@property (weak, nonatomic) IBOutlet UIButton *facebookShareButton;
+@property (weak, nonatomic) IBOutlet UIButton *favoriteButton;
+@property (weak, nonatomic) IBOutlet UIView *currentTableView;
+@property (weak, nonatomic) IBOutlet UIImageView *yahooImageView;
 
 @end
 
 @implementation CurrentViewController
 
+# pragma mark - View Life Cycle
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    
+    // Initialize facebook button
+    UIImage *facebookImage = [[UIImage imageNamed:@"Facebook.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.facebookShareButton setImage:facebookImage forState:UIControlStateNormal];
+    self.facebookShareButton.imageView.tintColor = [UIColor greenColor];
+    
+    // Initialize favorite button
+    self.favoriteButton.imageView.tintColor = [UIColor greenColor];
+    [self updateFavoriteButton];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)viewWillAppear:(BOOL)animated {
+    [self refreshStockDetailTable];
 }
 
-/*
-#pragma mark - Navigation
+//- (void)didReceiveMemoryWarning {
+//    [super didReceiveMemoryWarning];
+//    // Dispose of any resources that can be recreated.
+//}
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+# pragma mark - Gesture Recognizer
+
+- (IBAction)didTapFacebookShareButton:(id)sender {
 }
-*/
+
+- (IBAction)didTapFavoriteButton:(id)sender {
+    self.stockDetailViewController.isFavoriteStock = !self.stockDetailViewController.isFavoriteStock;
+    [self updateFavoriteButton];
+}
+
+# pragma mark - Worker
+
+- (void)refreshStockDetailTable {
+}
+
+- (void)updateFavoriteButton {
+    UIImage *favoriteImage;
+    if (self.stockDetailViewController.isFavoriteStock) {
+        favoriteImage = [UIImage imageNamed:@"StarFilled.png"];
+    } else {
+        favoriteImage = [UIImage imageNamed:@"StarHollow.png"];
+    }
+    favoriteImage = [favoriteImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.favoriteButton setImage:favoriteImage forState:UIControlStateNormal];
+}
 
 @end

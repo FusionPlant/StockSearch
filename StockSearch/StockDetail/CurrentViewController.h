@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "StockDetailViewController.h"
 
 @interface CurrentViewController : UIViewController
+
+@property (weak, nonatomic) StockDetailViewController *stockDetailViewController;
 
 @end

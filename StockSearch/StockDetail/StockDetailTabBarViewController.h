@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "StockDetailViewController.h"
 
 @interface StockDetailTabBarViewController : UITabBarController
+
+@property (weak, nonatomic) StockDetailViewController *stockDetailViewController;
 
 @end

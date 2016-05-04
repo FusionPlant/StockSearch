@@ -10,4 +10,12 @@
 
 @interface StockSearchViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate>
 
+enum TabSelection {
+    TabSelectionCurrent,
+    TabSelectionHistorical,
+    TabSelectionNews
+};
+
+- (void)unwindFromStockDetail:(id)sourceViewController;
+
 @end

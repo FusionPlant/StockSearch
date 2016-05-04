@@ -15,6 +15,12 @@
 
 @interface StockDetailViewController ()
 
+@property (weak, nonatomic) IBOutlet UIButton *currentButton;
+@property (weak, nonatomic) IBOutlet UIButton *historicalButton;
+@property (weak, nonatomic) IBOutlet UIButton *newsButton;
+
+@property (weak, nonatomic) StockDetailTabBarViewController *stockDetailTabBarViewController;
+
 @end
 
 @implementation StockDetailViewController
@@ -23,47 +29,94 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    
+    // Initialized navigation bar
+    self.navigationItem.title = self.stockSymbolString;
+    [self.navigationController.navigationBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.shadowImage = nil;
+    self.navigationController.navigationBar.translucent = YES;
+    
+    // Initialized buttons
+    self.currentButton.layer.cornerRadius = 5.0f;
+    self.historicalButton.layer.cornerRadius = 5.0f;
+    self.newsButton.layer.cornerRadius = 5.0f;
+    
+    // Switch to right tab in tab bar view controller
+    [self switchToTab];
     
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
+//- (void)didReceiveMemoryWarning {
+//    [super didReceiveMemoryWarning];
+//    // Dispose of any resources that can be recreated.
+//}
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"embedTabBarSegue"]) {
-        StockDetailTabBarViewController *vc = segue.destinationViewController;
-        vc.tabBar.hidden = YES;
+        self.stockDetailTabBarViewController = segue.destinationViewController;
+        self.stockDetailTabBarViewController.tabBar.hidden = YES;
+        self.stockDetailTabBarViewController.stockDetailViewController = self;
     }
 }
 
-
-#pragma mark - Networking
-
-- (void) networking {
-    
-    NSURLSession *stockSearchSession = [NSURLSession sharedSession];
-    NSURL *URL = [NSURL URLWithString:@"http://stockSearch-1266.appspot.com/?company_name=aapl"];
-    NSURLSessionDataTask *stockSearchTask = [stockSearchSession dataTaskWithURL:URL completionHandler:^(NSData *data, NSURLResponse *response, NSError* error){
-        if (error == nil) {
-            NSArray *mydic = [NSJSONSerialization JSONObjectWithData:data options:(NSJSONReadingOptions)0 error:nil];
-            NSLog(@"dictionary: %@, %d", mydic, [mydic isKindOfClass:[NSArray class]]);
-        }
-    }];
-    [stockSearchTask resume];
-    
+- (void)viewWillDisappear:(BOOL)animated {
+    [self.stockSearchViewController unwindFromStockDetail:self];
 }
 
-/*
-#pragma mark - Navigation
+#pragma mark - Gesture Recognizer
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+- (IBAction)didTapCurrentButton:(id)sender {
+    self.stockDetailTabSelection = TabSelectionCurrent;
+    [self switchToTab];
 }
-*/
+
+- (IBAction)didTapHistoricalButton:(id)sender {
+    self.stockDetailTabSelection = TabSelectionHistorical;
+    [self switchToTab];
+}
+
+- (IBAction)didTapNewsButton:(id)sender {
+    self.stockDetailTabSelection = TabSelectionNews;
+    [self switchToTab];
+}
+
+#pragma mark - Worker
+
+- (void)switchToTab {
+    
+    // Restore all buttons to unselected state
+    self.currentButton.backgroundColor = [UIColor clearColor];
+    [self.currentButton setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
+    self.historicalButton.backgroundColor = [UIColor clearColor];
+    [self.historicalButton setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
+    self.newsButton.backgroundColor = [UIColor clearColor];
+    [self.newsButton setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
+    
+    // Switch to the tab and change cooresponding button style
+    switch (self.stockDetailTabSelection) {
+        case TabSelectionCurrent:
+            self.currentButton.backgroundColor = [UIColor blueColor];
+            [self.currentButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.stockDetailTabBarViewController.selectedIndex = 0;
+            break;
+            
+        case TabSelectionHistorical:
+            self.historicalButton.backgroundColor = [UIColor blueColor];
+            [self.historicalButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.stockDetailTabBarViewController.selectedIndex = 1;
+            break;
+            
+        case TabSelectionNews:
+            self.newsButton.backgroundColor = [UIColor blueColor];
+            [self.newsButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.stockDetailTabBarViewController.selectedIndex = 2;
+            break;
+            
+        default:
+            NSAssert(false, @"Internal Error When Switching Tabs.");
+            break;
+    }
+    
+}
 
 @end

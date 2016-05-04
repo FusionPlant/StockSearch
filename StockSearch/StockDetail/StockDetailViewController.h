@@ -11,6 +11,9 @@
 
 @interface StockDetailViewController : UIViewController
 
-@property (weak, nonatomic) StockSearchViewController *searchViewController;
+@property (weak, nonatomic) StockSearchViewController *stockSearchViewController;
+@property (nonatomic) enum TabSelection stockDetailTabSelection;
+@property (nonatomic) NSString *stockSymbolString;
+@property (nonatomic) BOOL isFavoriteStock;
 
 @end

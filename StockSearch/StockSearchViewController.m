@@ -26,7 +26,8 @@
 @property (weak, nonatomic) IBOutlet UITableView *favoriteStocksTableView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
 
-@property NSString *stockSymbolForDetailString;
+@property (nonatomic) enum TabSelection stockDetailTabSelection;
+@property (nonatomic) NSString *stockSymbolForDetailString;
 @property NSMutableArray *stockSymbolsMutableArray;
 @property NSMutableDictionary *stockDetailsMutableDict;
 @property NSTimer *autoRefreshTimer;
@@ -50,11 +51,6 @@
 //    [self.stockSymbolsMutableArray addObject:@"GOOGL"];
 //    [self saveStockSymbolsMutableArray];
     
-    // Make navigation bar transparent
-    [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
-    self.navigationController.navigationBar.shadowImage = [UIImage new];
-    self.navigationController.navigationBar.translucent = YES;
-    
     // Configure search text field
     [self initializeSearchTextField];
     
@@ -77,20 +73,57 @@
     [self.refreshButton setImage:refreshImage forState:UIControlStateNormal];
     self.refreshButton.imageView.tintColor = [UIColor whiteColor];
     
+    // Set stock detail tab selection to current
+    self.stockDetailTabSelection = TabSelectionCurrent;
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)viewWillAppear:(BOOL)animated {
+    // Make navigation bar transparent
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.shadowImage = [UIImage new];
+    self.navigationController.navigationBar.translucent = YES;
 }
+
+//- (void)didReceiveMemoryWarning {
+//    [super didReceiveMemoryWarning];
+//}
+
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    
     if ([segue.identifier isEqualToString:@"ShowStockDetailSegue"]) {
         StockDetailViewController *stockDetailViewController = (StockDetailViewController *)segue.destinationViewController;
-        stockDetailViewController.searchViewController = self;
+        
+        BOOL isFavoriteStock = ([self.stockSymbolsMutableArray indexOfObject:self.stockSymbolForDetailString] != NSNotFound);
+        stockDetailViewController.isFavoriteStock = isFavoriteStock;
+        stockDetailViewController.stockDetailTabSelection = self.stockDetailTabSelection;
+        stockDetailViewController.stockSymbolString = self.stockSymbolForDetailString;
+        stockDetailViewController.stockSearchViewController = self;
     }
 }
 
-#pragma mark - gesture recognizer
+- (void)unwindFromStockDetail:(id)sourceViewController {
+    
+    StockDetailViewController *source = (StockDetailViewController *)sourceViewController;
+    NSAssert([self.stockSymbolForDetailString isEqualToString:source.stockSymbolString], @"Internal Error When Unwinding To Stock Search!");
+    
+    // Update stock symbol array and table view
+    NSUInteger indexOfSymbol = [self.stockSymbolsMutableArray indexOfObject:self.stockSymbolForDetailString];
+    if (indexOfSymbol == NSNotFound && source.isFavoriteStock) {
+        // Add stock symbol to favorite stocks
+        [self.stockSymbolsMutableArray addObject:self.stockSymbolForDetailString];
+        [self saveStockSymbolsMutableArray];
+    } else if (indexOfSymbol != NSNotFound && !source.isFavoriteStock) {
+        // Remove stock symbol from favorite stocks
+        [self.stockSymbolsMutableArray removeObjectAtIndex:indexOfSymbol];
+        [self saveStockSymbolsMutableArray];
+    }
+    [self fetchAndUpdateStockDetails];
+    
+    // Save stock detail tab selection
+    self.stockDetailTabSelection = source.stockDetailTabSelection;
+}
+
+#pragma mark - Gesture Recognizer
 
 - (IBAction)didTapGetQuoteButton:(id)sender {
     [self validateSearchTextAndGoToDetailView];
@@ -108,7 +141,7 @@
     [self fetchAndUpdateStockDetails];
 }
 
-#pragma mark - worker
+#pragma mark - Worker
 
 - (void)initializeSearchTextField {
     StockNameCompletion *searchViewStockNameCompletion = [[StockNameCompletion alloc]init];
@@ -225,6 +258,8 @@
             
             [stockSearchTask resume];
         }
+    } else {
+        [self.favoriteStocksTableView reloadData];
     }
 }
 
@@ -255,6 +290,12 @@
     }
     NSString *symbolString = [self.searchTextField.text substringToIndex:symbolLength].uppercaseString;
     
+    // Check symbolString only contain letters
+    NSCharacterSet *letterSet = [NSCharacterSet letterCharacterSet];
+    if ([symbolString stringByTrimmingCharactersInSet:letterSet].length > 0) {
+        [self showAlertWithTitle:@"Invalid Symbol"];
+        return;
+    }
     
     NSString *URLString = [@"http://stockSearch-1266.appspot.com/?company_name=" stringByAppendingString:symbolString];
     NSURL *URL = [NSURL URLWithString:URLString];
@@ -287,13 +328,15 @@
     
 }
 
-#pragma mark - UITextFieldDelegate
+#pragma mark - TextField Delegate
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [self.searchTextField resignFirstResponder];
     [self validateSearchTextAndGoToDetailView];
     return YES;
 }
+
+#pragma mark - TableView Delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
@@ -315,7 +358,7 @@
     }
 }
 
-#pragma mark - UITableViewDataSource
+#pragma mark - TableView DataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     // Number of rows is the number of time zones in the region for the specified section
@@ -376,7 +419,7 @@
 }
 
 
-#pragma mark - data model
+#pragma mark - Data Model
 
 - (void)initializeDataModel {
     
@@ -481,17 +524,5 @@
         NSAssert(false, @"Data Model Error When Saving Data! %@, %@", error, error.userInfo);
     }
 }
-
-
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end
