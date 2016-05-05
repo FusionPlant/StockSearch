@@ -6,7 +6,6 @@
 //  Copyright © 2016 TailaiYe. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "MLPAutoCompleteTextFieldDataSource.h"
 #import "MLPAutoCompleteTextFieldDelegate.h"

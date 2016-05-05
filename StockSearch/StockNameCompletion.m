@@ -7,8 +7,6 @@
 //
 
 #import "StockNameCompletion.h"
-#import "MLPAutoCompleteTextField.h"
-#import "MLPAutoCompletionObject.h"
 
 @implementation StockNameCompletion
 

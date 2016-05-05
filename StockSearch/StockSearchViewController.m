@@ -6,7 +6,6 @@
 //  Copyright © 2016 TailaiYe. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 #import "AppDelegate.h"
 #import "StockSearchViewController.h"
@@ -44,12 +43,8 @@
     
     // Initialize data model
     self.managedObjectContext = ((AppDelegate *)([UIApplication sharedApplication].delegate)).managedObjectContext;
-//    [self clearDataModel];
     [self initializeDataModel];
     [self initializeStockCache];
-//    [self.stockSymbolsMutableArray addObject:@"AAPL"];
-//    [self.stockSymbolsMutableArray addObject:@"GOOGL"];
-//    [self saveStockSymbolsMutableArray];
     
     // Configure search text field
     [self initializeSearchTextField];
@@ -61,7 +56,6 @@
     
     // Initialize table view
     self.favoriteStocksTableView.separatorInset = UIEdgeInsetsZero;
-    [self fetchAndUpdateStockDetails];
     
     // Set auto-refresh switch
     self.autoRefreshTimer = nil;
@@ -78,6 +72,10 @@
 }
 
 - (void)viewWillAppear:(BOOL)animated {
+    
+    // Fetech and update table data
+    [self fetchAndUpdateStockDetails];
+    
     // Make navigation bar transparent
     [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
     self.navigationController.navigationBar.shadowImage = [UIImage new];
@@ -143,15 +141,16 @@
     StockNameCompletion *searchViewStockNameCompletion = [[StockNameCompletion alloc]init];
     self.searchTextField.autoCompleteDataSource = searchViewStockNameCompletion;
     self.searchTextField.autoCompleteDelegate = searchViewStockNameCompletion;
-    self.searchTextField.backgroundColor = [UIColor whiteColor];
-    self.searchTextField.layer.borderColor = [[UIColor whiteColor] CGColor];
-    self.searchTextField.layer.borderWidth = 2.0f;
+    self.searchTextField.maximumNumberOfAutoCompleteRows = 4;
     self.searchTextField.showTextFieldDropShadowWhenAutoCompleteTableIsOpen = NO;
     self.searchTextField.applyBoldEffectToAutoCompleteSuggestions = NO;
     self.searchTextField.autoCompleteRowHeight = 55.0f;
-    self.searchTextField.maximumNumberOfAutoCompleteRows = 4;
-    self.searchTextField.autoCompleteTableBorderColor = [UIColor whiteColor];
     self.searchTextField.autoCompleteTableBorderWidth = 1.0f;
+    self.searchTextField.autoCompleteTableBorderColor = [UIColor whiteColor];
+    self.searchTextField.backgroundColor = [UIColor whiteColor];
+    self.searchTextField.layer.borderColor = [[UIColor whiteColor] CGColor];
+    self.searchTextField.layer.borderWidth = 2.0f;
+    self.searchTextField.clearButtonMode = UITextFieldViewModeAlways;
 }
 
 // Update refresh state and schedule the timer if necessary
@@ -169,7 +168,7 @@
     }
 }
 
-- (NSMutableDictionary *)dictionaryWithJSONData:(NSData *)JSONData {
+- (NSMutableDictionary *)stockDictionaryWithJSONData:(NSData *)JSONData {
     
     NSDictionary *stockDetailDict = [NSJSONSerialization JSONObjectWithData:JSONData options:(NSJSONReadingOptions)0 error:nil];
     NSMutableDictionary *stockDetailMutableDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", @"Price", @"", @"Change", @"", @"CompanyName", @"", @"MarketCap", nil];
@@ -234,7 +233,7 @@
             NSURLSessionDataTask *stockSearchTask = [[NSURLSession sharedSession] dataTaskWithURL:URL completionHandler:^(NSData *data, NSURLResponse *response, NSError* error){
                 // If row has not been deleted, update the stock details mutable dictionary and reload table data
                 if (error == nil && [self.stockSymbolsMutableArray indexOfObject:symbolString] != NSNotFound) {
-                    self.stockDetailsMutableDict[symbolString] = [self dictionaryWithJSONData:data];
+                    self.stockDetailsMutableDict[symbolString] = [self stockDictionaryWithJSONData:data];
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.favoriteStocksTableView reloadData];
                     });
@@ -321,7 +320,7 @@
             });
         } else {
             // Network error when validating symbol
-            NSLog(@"Network Error When Validating Symbol.");
+            [self showAlertWithTitle:@"Network Error"];
         }
     }];
     
@@ -369,7 +368,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath  {
     
     // Load cell prototype
-    static NSString *CellIdentifier = @"FavoriteStockCell";
+    NSString *CellIdentifier = @"FavoriteStockCell";
     FavoriteStockTableViewCell *cell = (FavoriteStockTableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     NSAssert(cell != nil, @"Internal Error When Dequeuing Cell.");
     
@@ -418,7 +417,6 @@
         [tableView reloadData];
     }
 }
-
 
 #pragma mark - Data Model
 

@@ -6,8 +6,6 @@
 //  Copyright © 2016 TailaiYe. All rights reserved.
 //
 
-#import <FBSDKShareKit/FBSDKSharing.h>
-#import <FBSDKShareKit/FBSDKSharingContent.h>
 #import <FBSDKShareKit/FBSDKShareLinkContent.h>
 #import <FBSDKShareKit/FBSDKShareDialog.h>
 #import "CurrentViewController.h"
@@ -58,7 +56,7 @@
     
     FBSDKShareLinkContent *facebookShareContent = [[FBSDKShareLinkContent alloc] init];
     
-    NSDictionary *stockDetailDict = self.currentTableViewController.stockDetail;
+    NSDictionary *stockDetailDict = self.currentTableViewController.stockDetailDictionary;
     NSString *priceString = [stockDetailDict[@"Price"] stringByReplacingOccurrencesOfString:@" " withString:@""];
     NSString *companyNameString = stockDetailDict[@"CompanyName"];
     NSString *symbolString = stockDetailDict[@"Symbol"];
@@ -96,7 +94,7 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (NSDictionary *)dictionaryWithJSONData:(NSData *)JSONData {
+- (NSDictionary *)stockDictionaryWithJSONData:(NSData *)JSONData {
     
     NSDictionary *stockDetailDict = [NSJSONSerialization JSONObjectWithData:JSONData options:(NSJSONReadingOptions)0 error:nil];
     NSMutableDictionary *stockDetailMutableDict = [NSMutableDictionary dictionary];
@@ -181,9 +179,9 @@
     NSURLSessionDataTask *stockSearchTask = [[NSURLSession sharedSession] dataTaskWithURL:URL completionHandler:^(NSData *data, NSURLResponse *response, NSError* error){
         // Update table view data if details are fetched successfully
         if (error == nil) {
-            NSDictionary *stockDetailDictionary = [self dictionaryWithJSONData:data];
+            NSDictionary *stockDetailDictionary = [self stockDictionaryWithJSONData:data];
             if (stockDetailDictionary != nil) {
-                self.currentTableViewController.stockDetail = stockDetailDictionary;
+                self.currentTableViewController.stockDetailDictionary = stockDetailDictionary;
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self.currentTableViewController updateStockDetail];
                 });

@@ -6,9 +6,7 @@
 //  Copyright © 2016 TailaiYe. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-#import "AppDelegate.h"
 #import "StockDetailViewController.h"
 #import "StockDetailTabBarViewController.h"
 
