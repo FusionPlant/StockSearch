@@ -53,20 +53,7 @@
 # pragma mark - Gesture Recognizer
 
 - (IBAction)didTapFacebookShareButton:(id)sender {
-    
-    FBSDKShareLinkContent *facebookShareContent = [[FBSDKShareLinkContent alloc] init];
-    
-    NSDictionary *stockDetailDict = self.currentTableViewController.stockDetailDictionary;
-    NSString *priceString = [stockDetailDict[@"Price"] stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *companyNameString = stockDetailDict[@"CompanyName"];
-    NSString *symbolString = stockDetailDict[@"Symbol"];
-    facebookShareContent.contentTitle = [NSString stringWithFormat:@"Current Stock Price of %@ is %@", companyNameString, priceString];
-    facebookShareContent.contentDescription = [NSString stringWithFormat:@"Stock Information of %@ (%@)", companyNameString, symbolString];
-    facebookShareContent.imageURL = [NSURL URLWithString:[@"http://chart.finance.yahoo.com/t?lang=en-US&width=220&height=200&s=" stringByAppendingString:symbolString]];
-    facebookShareContent.contentURL = [NSURL URLWithString:[@"http://finance.yahoo.com/q?s=" stringByAppendingString:symbolString]];
-    
-    //[FBSDKShareDialog showFromViewController:self withContent:facebookShareContent delegate:nil];
-    [FBSDKShareDialog showFromViewController:self.stockDetailViewController withContent:facebookShareContent delegate:nil];
+    [self shareOnFacebook];
 }
 
 - (IBAction)didTapFavoriteButton:(id)sender {
@@ -85,6 +72,22 @@
     }
     favoriteImage = [favoriteImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.favoriteButton setImage:favoriteImage forState:UIControlStateNormal];
+}
+
+- (void)shareOnFacebook {
+    
+    FBSDKShareLinkContent *facebookShareContent = [[FBSDKShareLinkContent alloc] init];
+    
+    NSDictionary *stockDetailDict = self.currentTableViewController.stockDetailDictionary;
+    NSString *priceString = [stockDetailDict[@"Price"] stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *companyNameString = stockDetailDict[@"CompanyName"];
+    NSString *symbolString = stockDetailDict[@"Symbol"];
+    facebookShareContent.contentTitle = [NSString stringWithFormat:@"Current Stock Price of %@ is %@", companyNameString, priceString];
+    facebookShareContent.contentDescription = [NSString stringWithFormat:@"Stock Information of %@ (%@)", companyNameString, symbolString];
+    facebookShareContent.imageURL = [NSURL URLWithString:[@"http://chart.finance.yahoo.com/t?lang=en-US&width=220&height=200&s=" stringByAppendingString:symbolString]];
+    facebookShareContent.contentURL = [NSURL URLWithString:[@"http://finance.yahoo.com/q?s=" stringByAppendingString:symbolString]];
+    
+    [FBSDKShareDialog showFromViewController:self.stockDetailViewController withContent:facebookShareContent delegate:self];
 }
 
 - (void)showAlertWithTitle:(NSString *) title {
@@ -122,7 +125,7 @@
     
     // Set price change percent
     numberFormatter.negativeFormat = @"(-##0.00'%')";
-    numberFormatter.positiveFormat = @"(##0.00'%')";
+    numberFormatter.positiveFormat = @"(+##0.00'%')";
     stockDetailMutableDict[@"Change"] = [priceChangeString stringByAppendingString:[numberFormatter stringFromNumber:stockDetailDict[@"ChangePercent"]]];
     
     // Set time and date
@@ -153,13 +156,12 @@
     stockDetailMutableDict[@"Volume"] = [numberFormatter stringFromNumber:stockDetailDict[@"Volume"]];
     
     // Set price change YTD
-    numberFormatter.positiveFormat = @"+###0.00";
-    numberFormatter.negativeFormat = @"-###0.00";
+    numberFormatter.positiveFormat = @"###0.00";
     NSString *changeYTDString = [numberFormatter stringFromNumber:stockDetailDict[@"ChangeYTD"]];
     
     // Set price change percent YTD
-    numberFormatter.positiveFormat = @"(##0.00'%')";
-    numberFormatter.negativeFormat = @"(-##0.00'%')";
+    numberFormatter.positiveFormat = @"(+###0.00'%')";
+    numberFormatter.negativeFormat = @"(-###0.00'%')";
     stockDetailMutableDict[@"ChangeYTD"] = [changeYTDString stringByAppendingString:[numberFormatter stringFromNumber:stockDetailDict[@"ChangePercentYTD"]]];
     
     // Set high, low, and open price
@@ -230,6 +232,38 @@
     }];
     
     [downloadTask resume];
+}
+
+#pragma mark - FBSDKSharing Delegate
+
+/*!
+ @abstract Sent to the delegate when the share completes without error or cancellation.
+ @param sharer The FBSDKSharing that completed.
+ @param results The results from the sharer.  This may be nil or empty.
+ */
+- (void)sharer:(id)sharer didCompleteWithResults:(NSDictionary *)results {
+    if (results[@"postId"] != nil) {
+        [self showAlertWithTitle:@"Stock Information Shared on Facebook!"];
+    } else {
+        [self showAlertWithTitle:@"Sharing Canceled."];
+    }
+}
+
+/*!
+ @abstract Sent to the delegate when the sharer encounters an error.
+ @param sharer The FBSDKSharing that completed.
+ @param error The error.
+ */
+- (void)sharer:(id)sharer didFailWithError:(NSError *)error {
+    [self showAlertWithTitle:[NSString stringWithFormat:@"Sharing Failed: %@", error]];
+}
+
+/*!
+ @abstract Sent to the delegate when the sharer is cancelled.
+ @param sharer The FBSDKSharing that completed.
+ */
+- (void)sharerDidCancel:(id)sharer {
+    [self showAlertWithTitle:@"Sharing Canceled."];
 }
 
 @end

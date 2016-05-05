@@ -7,9 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <FBSDKShareKit/FBSDKSharing.h>
 #import "StockDetailViewController.h"
 
-@interface CurrentViewController : UIViewController
+@interface CurrentViewController : UIViewController <FBSDKSharingDelegate>
 
 @property (weak, nonatomic) StockDetailViewController *stockDetailViewController;
 
