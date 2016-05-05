@@ -73,13 +73,18 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     
-    // Fetech and update table data
-    [self fetchAndUpdateStockDetails];
-    
     // Make navigation bar transparent
     [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
     self.navigationController.navigationBar.shadowImage = [UIImage new];
     self.navigationController.navigationBar.translucent = YES;
+    
+    // Fetech and update table data
+    [self fetchAndUpdateStockDetails];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    // Hide keyboard for text field
+    [self.searchTextField resignFirstResponder];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
