@@ -10,6 +10,8 @@
 
 @implementation StockNameCompletion
 
+# pragma mark - AutoComplete DataSource
+
 - (void)autoCompleteTextField:(MLPAutoCompleteTextField *)textField
  possibleCompletionsForString:(NSString *)string
             completionHandler:(void(^)(NSArray *suggestions))handler {
@@ -58,6 +60,8 @@
     [stockSearchTask resume];
     
 }
+
+#pragma mark - AutoComplete Delegate
 
 - (void)autoCompleteTextField:(MLPAutoCompleteTextField *)textField
 willShowAutoCompleteTableView:(UITableView *)autoCompleteTableView {

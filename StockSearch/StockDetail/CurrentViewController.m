@@ -156,8 +156,10 @@
     stockDetailMutableDict[@"Volume"] = [numberFormatter stringFromNumber:stockDetailDict[@"Volume"]];
     
     // Set price change YTD
-    numberFormatter.positiveFormat = @"###0.00";
-    NSString *changeYTDString = [numberFormatter stringFromNumber:stockDetailDict[@"ChangeYTD"]];
+    numberFormatter.positiveFormat = @"+##0.00";
+    numberFormatter.negativeFormat = @"-##0.00";
+    float priceChangeYTD = [stockDetailDict[@"LastPrice"] floatValue] - [stockDetailDict[@"ChangeYTD"] floatValue];
+    NSString *changeYTDString = [numberFormatter stringFromNumber:[NSNumber numberWithFloat:priceChangeYTD]];
     
     // Set price change percent YTD
     numberFormatter.positiveFormat = @"(+###0.00'%')";

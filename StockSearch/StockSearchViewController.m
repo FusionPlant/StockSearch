@@ -146,16 +146,16 @@
     StockNameCompletion *searchViewStockNameCompletion = [[StockNameCompletion alloc]init];
     self.searchTextField.autoCompleteDataSource = searchViewStockNameCompletion;
     self.searchTextField.autoCompleteDelegate = searchViewStockNameCompletion;
+    self.searchTextField.backgroundColor = [UIColor whiteColor];
+    self.searchTextField.layer.borderColor = [[UIColor whiteColor] CGColor];
+    self.searchTextField.layer.borderWidth = 2.0f;
+    self.searchTextField.clearButtonMode = UITextFieldViewModeAlways;
     self.searchTextField.maximumNumberOfAutoCompleteRows = 4;
     self.searchTextField.showTextFieldDropShadowWhenAutoCompleteTableIsOpen = NO;
     self.searchTextField.applyBoldEffectToAutoCompleteSuggestions = NO;
     self.searchTextField.autoCompleteRowHeight = 55.0f;
     self.searchTextField.autoCompleteTableBorderWidth = 1.0f;
     self.searchTextField.autoCompleteTableBorderColor = [UIColor whiteColor];
-    self.searchTextField.backgroundColor = [UIColor whiteColor];
-    self.searchTextField.layer.borderColor = [[UIColor whiteColor] CGColor];
-    self.searchTextField.layer.borderWidth = 2.0f;
-    self.searchTextField.clearButtonMode = UITextFieldViewModeAlways;
 }
 
 // Update refresh state and schedule the timer if necessary
